@@ -1,6 +1,5 @@
 import pandas as pd
 import numpy as np
-import PyQt5
 import matplotlib.pyplot as plt
 
 def dataReader (train_path, test_path):
@@ -8,15 +7,23 @@ def dataReader (train_path, test_path):
                                 delim_whitespace = True)
     test_concat = pd.read_csv (test_path, header = None,
                                 delim_whitespace = True)
-
     y_train = train_concat.iloc[:, 0]
     X_train = train_concat.iloc[:, 1:]
     y_test = test_concat.iloc[:, 0]
     X_test = test_concat.iloc[:, 1:]
-
     return [X_train, X_test, y_train, y_test]
 
-def printDigit (digit):
-    transformed = np.reshape (digit.values, (16, 16))
-    plt.imshow (transformed)
-    plt.show ()
+def digit2Fig(feature, ax):
+    transformed = np.reshape (feature.values, (16, 16))
+    im = ax.imshow (transformed, cmap = 'gist_yarg')
+    return [ax, im]
+
+def pickDigit (features, patterns, index):
+    true_idx = index-1
+    ind_feats = features.iloc[true_idx, :]
+    ind_id = patterns.iloc[true_idx]
+    return [ind_feats, ind_id]
+
+def findDigit (features, patterns, value):
+    indexes = patterns[patterns == float (value)]
+    return features.iloc[indexes.index[0]]
