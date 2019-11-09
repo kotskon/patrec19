@@ -26,4 +26,10 @@ def pickDigit (features, patterns, index):
 
 def findDigit (features, patterns, value):
     indexes = patterns[patterns == float (value)]
-    return features.iloc[indexes.index[0]]
+    return features.iloc[indexes.index[:], :]
+
+def pixelSummoner (digit_feats, loc):
+    x = loc[0] - 1
+    y = loc[1] - 1
+    flat_pos = 16 * x + y
+    return digit_feats.iloc[:, flat_pos]
