@@ -1,7 +1,10 @@
 import config
 from src import datautilus
+from src import euclidean_classifier
 import matplotlib.pyplot as plt
 import pandas as pd
+from sklearn.model_selection import cross_validate
+import numpy as np
 
 #A global variable.
 dataHouse = config.ToolConfig ()
@@ -30,16 +33,19 @@ def main ():
     step9_fig, axs9 = plt.subplots (2, 5, figsize = (20, 20))
 
     #Step 10
-    means_overall = pd.DataFrame ()
-    vars_overall = pd.DataFrame ()
     for num in range(10):
         #Step 3
-        step3_num = datautilus.findDigit (X_train, y_train, num).iloc[0, :]
+        step3_num = datautilus.findDigit (X_train, y_train, num)[0, :]
         #Steps 6-9
         mean_num, var_num = datautilus.analyzeDigit (X_train, y_train, num,
                                                      dataHouse.save)
-        means_overall = means_overall.append (mean_num, ignore_index = True)
-        vars_overall = vars_overall.append (var_num, ignore_index = True)
+        if num == 0:
+            means_overall = mean_num
+            vars_overall = var_num
+        else:
+            means_overall = np.vstack ((means_overall, mean_num))
+            vars_overall = np.vstack ((vars_overall, var_num))
+
         axs3[posx, posy], im3 = datautilus.digit2Fig (step3_num,
                                                       axs3[posx, posy])
         axs9[posx, posy], im9 = datautilus.digit2Fig (mean_num,
@@ -62,9 +68,9 @@ def main ():
     #Steps 4-5
     flat_idx = 9 * 16 + 9
     print ('For digit 0, mean value of pixel (10, 10) is ',
-           means_overall.iloc[0, :].values[flat_idx])
+           means_overall[0, flat_idx])
     print ('For digit 0, variance of pixel (10, 10) is ',
-           vars_overall.iloc[0, :].values[flat_idx])
+           vars_overall[0, flat_idx])
 
     #Step 10
     feat_101, id_101 = datautilus.pickDigit (X_train, y_train, 101)
@@ -74,9 +80,18 @@ def main ():
     datautilus.printSingleDigit (feat_101, dataHouse.save, 'step10')
 
     #Step 11
-    score, pairs = datautilus.batchEuclid (X_test, y_test, means_overall)
+    score = datautilus.batchEuclid (X_test, y_test, means_overall)
     print ('The trained Euclidean classifier performed ', score,
            'successfully on the test dataset.')
+
+    #Step 13
+    X_total = np.vstack((X_train, X_test))
+    print (y_train, y_test)
+    y_total = np.concatenate((y_train, y_test))
+    print ('Datasets joined!')
+    lilEuclid = euclidean_classifier.EuclideanClassifier ()
+    print ('Ready to cross_validate!')
+    cv_results = cross_validate (lilEuclid, X_total, y_total, cv = 5)
 
 if __name__ != '__main__':
     main ()
