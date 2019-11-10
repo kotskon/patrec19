@@ -21,15 +21,13 @@ def main ():
     X_train, X_test, y_train, y_test = datautilus.dataReader (
                                          dataHouse.train,
                                          dataHouse.test)
-    print ('All aboard!')
 
     #Step 2
     print ('Picking pattern #131...')
     feat_131, id_131 = datautilus.pickDigit (X_train, y_train, 131)
     print ('Done! Number is ', int (id_131))
     datautilus.printSingleDigit (feat_131, dataHouse.save, 'step2')
-
-    print ('Commencing serial digit search...')
+    
     posx, posy = 0, 0
     step3_fig, axs3 = plt.subplots (2, 5, figsize = (20, 20))
     step9_fig, axs9 = plt.subplots (2, 5, figsize = (20, 20))
@@ -64,7 +62,6 @@ def main ():
     plt.close ()
     step9_fig.tight_layout ()
     step9_fig.savefig(dataHouse.save + 'step9.svg')
-    #plt.show ()
     plt.close ()
 
     #Steps 4-5
@@ -88,37 +85,12 @@ def main ():
 
     #Step 13
     X_total = np.vstack((X_train, X_test))
-    #print (y_train, y_test)
     y_total = np.concatenate((y_train, y_test))
     print ('Datasets joined!')
     lilEuclid = euclidean_classifier.EuclideanClassifier ()
     print ('Ready to cross_validate!')
     cv_results = cross_validate (lilEuclid, X_total, y_total, cv = 5)
     print ('CV-complete: ', cv_results)
-
-"""
-    #train_sizes = np.linspace((.1, 1.0, 5))
-    train_sizes, train_scores, test_scores = learning_curve(lilEuclid,
-                                                            X_total, y_total)
-    train_scores_mean = np.mean(train_scores, axis=1)
-    train_scores_std = np.std(train_scores, axis=1)
-    test_scores_mean = np.mean(test_scores, axis=1)
-    test_scores_std = np.std(test_scores, axis=1)
-    plt.grid()
-
-    plt.fill_between(train_sizes, train_scores_mean - train_scores_std,
-                     train_scores_mean + train_scores_std, alpha=0.1,
-                     color="r")
-    plt.fill_between(train_sizes, test_scores_mean - test_scores_std,
-                     test_scores_mean + test_scores_std, alpha=0.1, color="g")
-    plt.plot(train_sizes, train_scores_mean, 'o-', color="r",
-             label="Training score")
-    plt.plot(train_sizes, test_scores_mean, 'o-', color="g",
-             label="Cross-validation score")
-
-    plt.legend(loc="best")
-    plt.show ()
-"""
 
 if __name__ != '__main__':
     main ()

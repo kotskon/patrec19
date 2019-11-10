@@ -6,8 +6,9 @@ import pandas as pd
 from sklearn.metrics.pairwise import euclidean_distances
 
 class EuclideanClassifier(BaseEstimator, ClassifierMixin):
-    """Classify samples based on the distance from the mean feature value"""
-
+    """
+    Classify samples based on the distance from the mean feature value
+    """
     def __init__(self):
         self.X_mean_ = None
 
