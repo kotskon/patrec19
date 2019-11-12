@@ -9,9 +9,13 @@ def dataReader (train_path, test_path):
     """
     train_concat = np.loadtxt (train_path)
     test_concat = np.loadtxt (test_path)
-    y_train = train_concat[:, 0]
+    """
+    For convenience, the labels are turned
+    from floats to int.
+    """
+    y_train = train_concat[:, 0].astype (int)
     X_train = train_concat[:, 1:]
-    y_test = test_concat[:, 0]
+    y_test = test_concat[:, 0].astype (int)
     X_test = test_concat[:, 1:]
     return X_train, X_test, y_train, y_test
 
@@ -36,25 +40,17 @@ def findDigit (features, patterns, value):
     """
     Returns all samples labelled with given value.
     """
-    indexes = np.nonzero (patterns.astype (int) == value)[0]
-    return features[indexes, :]
+    #indexes = np.nonzero (patterns == value)[0]
+    return features[patterns == value, :]
 
-def analyzeDigit (features, patterns, value, path):
+def analyzeDigit (features, patterns, value):
     """
     Computes mean and variance values for all pixels (features)
-    of the digit denoted by input variable 'value'. Saves relevant plots.
+    of the digit denoted by input variable 'value'
     """
     feats_val = findDigit (features, patterns, value)
     mean_val = feats_val.mean (axis = 0)
     var_val = feats_val.var (axis = 0)
-    [steps6_8_fig, axs] = plt.subplots (1, 2, squeeze = False,
-                                        figsize = (20, 20))
-    [axs[0, 0], im] = digit2Fig (mean_val, axs[0, 0])
-    steps6_8_fig.colorbar (im, ax = axs[0, 0], fraction = .04)
-    [axs[0, 1], im] = digit2Fig (var_val, axs[0, 1])
-    steps6_8_fig.colorbar (im, ax = axs[0, 1], fraction = .04)
-    steps6_8_fig.savefig(path + str (value) + '_stats.svg')
-    plt.close ()
     return mean_val, var_val
 
 def askEuclid (knowledge, feature):
@@ -64,17 +60,16 @@ def askEuclid (knowledge, feature):
     dists = euclidean_distances (knowledge, [feature])
     return np.array (dists).argmin ()
 
-def printSingleDigit (feature, path, name):
+def printSingleDigit (feature):
     """
-    Plots and saves a single sample.
+    Plots a single sample.
     """
     fig, axs = plt.subplots ()
     axs, im = digit2Fig (feature, axs)
     fig.colorbar (im)
     axs.set_ylabel ('pixel no.')
     axs.set_xlabel ('pixel no.')
-    fig.savefig(path + name + '.svg')
-    plt.close ()
+    plt.show ()
 
 def batchEuclid (features, patterns, knowledge):
     """
@@ -82,7 +77,7 @@ def batchEuclid (features, patterns, knowledge):
     """
     dists = euclidean_distances (knowledge, features)
     preds = np.array (dists).argmin (axis = 0)
-    truthVector = (preds.T.astype (float) == patterns).astype(int)
+    truthVector = (preds.T.astype (float) == patterns)
     pos = truthVector.sum ()
     score = pos / features.shape[0] * 100
     return score

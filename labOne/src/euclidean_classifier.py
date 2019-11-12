@@ -15,21 +15,14 @@ class EuclideanClassifier(BaseEstimator, ClassifierMixin):
 
     def fit(self, X, y):
         """
-        This should fit classifier. All the "work" should be done here.
-
         Calculates self.X_mean_ based on the mean
         feature values in X for each class.
-
-        self.X_mean_ becomes a numpy.ndarray of shape
-        (n_classes, n_features)
-
-        fit always returns self.
         """
         for i in range (10):
-            print (i)
             feats_val = datautilus.findDigit (X, y, i)
+            #print (i, ':')
+            #print (feats_val)
             mean_val = feats_val.mean (axis = 0)
-            print (mean_val)
             if i == 0:
                 self.X_mean = mean_val
             else:
@@ -53,7 +46,7 @@ class EuclideanClassifier(BaseEstimator, ClassifierMixin):
         for X based on ground truth y
         """
         preds = self.predict (X)
-        truthVector = (preds.T.astype (float) == y).astype(int)
+        truthVector = (preds.T.astype (float) == y)
         pos = truthVector.sum ()
         score = pos / X.shape[0] * 100
         return score
