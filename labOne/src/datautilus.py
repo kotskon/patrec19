@@ -40,7 +40,6 @@ def findDigit (features, patterns, value):
     """
     Returns all samples labelled with given value.
     """
-    #indexes = np.nonzero (patterns == value)[0]
     return features[patterns == value, :]
 
 def analyzeDigit (features, patterns, value):
@@ -81,3 +80,13 @@ def batchEuclid (features, patterns, knowledge):
     pos = truthVector.sum ()
     score = pos / features.shape[0] * 100
     return score
+
+def probGen (patterns):
+    """
+    Returns a vector of probabilities, based on the frequency
+    of each pattern in the data.
+    """
+    probz = np.zeros((10,), dtype = float)
+    for i in range (10):
+        probz[i] = (patterns == i).sum () / patterns.size
+    return probz
