@@ -36,21 +36,22 @@ def pickDigit (features, patterns, index):
     ind_id = patterns[true_idx]
     return ind_feats, ind_id
 
-def findDigit (features, patterns, value):
-    """
-    Returns all samples labelled with given value.
-    """
-    return features[patterns == value, :]
-
-def analyzeDigit (features, patterns, value):
+def analyzeDigits (features, patterns):
     """
     Computes mean and variance values for all pixels (features)
-    of the digit denoted by input variable 'value'
+    of all digits.
     """
-    feats_val = findDigit (features, patterns, value)
-    mean_val = feats_val.mean (axis = 0)
-    var_val = feats_val.var (axis = 0)
-    return mean_val, var_val
+    for i in range (10):
+        feats_val = features[patterns == i]
+        mean_val = feats_val.mean (axis = 0)
+        var_val = feats_val.var (axis = 0)
+        if i == 0:
+            mean_all = mean_val
+            var_all = var_val
+        else:
+            mean_all = np.vstack((mean_all, mean_val))
+            var_all = np.vstack((var_all, var_val))
+    return mean_all, var_all
 
 def askEuclid (knowledge, feature):
     """
@@ -90,3 +91,28 @@ def probGen (patterns):
     for i in range (10):
         probz[i] = (patterns == i).sum () / patterns.size
     return probz
+
+def bayesHelp (means, vars, priors, features, smooth_fac):
+    """
+    Performs naive Gaussian Bayes inference on a set of features, given
+    their respective means, vars and priors.
+    """
+    init_preds = np.zeros ((features.shape[0], 10))
+    #Based on scikit-learn's GaussianNB implementation.
+    if smooth_fac != 0:
+        vars += smooth_fac * vars.max ()
+    for i in range (10):
+        dig_cov  = vars[i, :]
+        #Keep only the non-zero variance features, to avoid
+        #NaN's when calculating Gaussian pdf.
+        idx = dig_cov != 0
+        dig_mean = means[i, :]
+        prob = - (features[:, idx] - dig_mean[idx]) ** 2 /     \
+               (2 * dig_cov[idx])
+        #Choose logarithm notation; consecutive multiplications
+        #of small numbers harm accuracy.
+        prob -= 0.5 * np.log (2 * np.pi * dig_cov[idx])
+        #Add the prior!
+        init_preds [:, i] = prob.sum (1) +              \
+                            np.log (priors[i])
+    return init_preds.argmax (axis = 1)

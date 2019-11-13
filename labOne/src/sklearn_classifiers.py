@@ -16,16 +16,10 @@ class EuclideanClassifier(BaseEstimator, ClassifierMixin):
 
     def fit(self, X, y):
         """
-        Calculates self.X_mean_ based on the mean
+        Calculates self.X_mean based on the mean
         feature values in X for each class.
         """
-        for i in range (10):
-            feats_val = datautilus.findDigit (X, y, i)
-            mean_val = feats_val.mean (axis = 0)
-            if i == 0:
-                self.X_mean = mean_val
-            else:
-                self.X_mean = np.vstack((self.X_mean, mean_val))
+        self.X_mean, useless = datautilus.analyzeDigits (X, y)
         return self
 
 
@@ -59,7 +53,7 @@ class NaiveBayesClassifier(BaseEstimator, ClassifierMixin):
     def __init__(self):
         self.aPriori = None
         self.X_mean_ = None
-        self.X_cov = None
+        self.X_var = None
 
     def fit (self, X, y):
         """
@@ -67,38 +61,15 @@ class NaiveBayesClassifier(BaseEstimator, ClassifierMixin):
         labels.
         """
         self.aPriori = datautilus.probGen (y)
-        for i in range (10):
-            feats_val = datautilus.findDigit (X, y, i)
-            mean_val = feats_val.mean (axis = 0)
-            cov_el = X[y  == i, :].var (axis = 0)
-            if i == 0:
-                self.X_mean = mean_val
-                self.X_cov = cov_el
-            else:
-                self.X_mean = np.vstack((self.X_mean, mean_val))
-                self.X_cov = np.vstack((self.X_cov, cov_el))
+        self.X_mean, self.X_var = datautilus.analyzeDigits (X, y)
         return self
 
     def predict (self, X):
         """
         Performs Bayesian inference on X.
         """
-        init_preds = np.zeros ((X.shape[0], 10))
-        for i in range (10):
-            dig_cov  = self.X_cov[i, :]
-            #Keep only the non-zero variance features, to avoid
-            #NaN's when calculating Gaussian pdf.
-            idx = dig_cov != 0
-            dig_mean = self.X_mean[i, :]
-            prob = - (X[:, idx] - dig_mean[idx]) ** 2 /     \
-                   (2 * dig_cov[idx])
-            #Choose logarithm notation; consecutive multiplications
-            #of small numbers harm accuracy.
-            prob -= 0.5 * np.log (2 * np.pi * dig_cov[idx])
-            #Add the prior!
-            init_preds [:, i] = prob.sum (1) +              \
-                                np.log (self.aPriori [i])
-        return init_preds.argmax (axis = 1)
+        return datautilus.bayesHelp (self.X_mean, self.X_var, self.aPriori,
+                          X, 0)
 
     def score (self, X, y):
             """
@@ -120,7 +91,7 @@ class NaiveBayesClassifierSmooth(BaseEstimator, ClassifierMixin):
     def __init__(self):
         self.aPriori = None
         self.X_mean_ = None
-        self.X_cov = None
+        self.X_var = None
 
     def fit (self, X, y):
         """
@@ -128,40 +99,15 @@ class NaiveBayesClassifierSmooth(BaseEstimator, ClassifierMixin):
         labels.
         """
         self.aPriori = datautilus.probGen (y)
-        for i in range (10):
-            feats_val = datautilus.findDigit (X, y, i)
-            mean_val = feats_val.mean (axis = 0)
-            cov_el = X[y  == i, :].var (axis = 0)
-            if i == 0:
-                self.X_mean = mean_val
-                self.X_cov = cov_el
-            else:
-                self.X_mean = np.vstack((self.X_mean, mean_val))
-                self.X_cov = np.vstack((self.X_cov, cov_el))
+        self.X_mean, self.X_var = datautilus.analyzeDigits (X, y)
         return self
 
     def predict (self, X):
         """
         Performs Bayesian inference on X.
         """
-        init_preds = np.zeros ((X.shape[0], 10))
-        smooth_fac = 1e-9 * self.X_cov.max ()
-        self.X_cov += smooth_fac
-        for i in range (10):
-            dig_cov  = self.X_cov[i, :]
-            #Keep only the non-zero variance features, to avoid
-            #NaN's when calculating Gaussian pdf.
-            idx = dig_cov != 0
-            dig_mean = self.X_mean[i, :]
-            prob = - (X[:, idx] - dig_mean[idx]) ** 2 /     \
-                   (2 * dig_cov[idx])
-            #Choose logarithm notation; consecutive multiplications
-            #of small numbers harm accuracy.
-            prob -= 0.5 * np.log (2 * np.pi * dig_cov[idx])
-            #Add the prior!
-            init_preds [:, i] = prob.sum (1) +              \
-                                np.log (self.aPriori [i])
-        return init_preds.argmax (axis = 1)
+        return datautilus.bayesHelp (self.X_mean, self.X_var, self.aPriori,
+                          X, 1e-9)
 
     def score (self, X, y):
             """
@@ -183,7 +129,7 @@ class NaiveBayesClassifierOnes(BaseEstimator, ClassifierMixin):
     def __init__(self):
         self.aPriori = None
         self.X_mean_ = None
-        self.X_cov = None
+        self.X_var = None
 
     def fit (self, X, y):
         """
@@ -191,39 +137,15 @@ class NaiveBayesClassifierOnes(BaseEstimator, ClassifierMixin):
         labels.
         """
         self.aPriori = datautilus.probGen (y)
-        for i in range (10):
-            feats_val = datautilus.findDigit (X, y, i)
-            mean_val = feats_val.mean (axis = 0)
-            cov_el = X[y  == i, :].var (axis = 0)
-            if i == 0:
-                self.X_mean = mean_val
-                self.X_cov = cov_el
-            else:
-                self.X_mean = np.vstack((self.X_mean, mean_val))
-                self.X_cov = np.vstack((self.X_cov, cov_el))
+        self.X_mean, self.X_var = datautilus.analyzeDigits (X, y)
         return self
 
     def predict (self, X):
         """
         Performs Bayesian inference on X.
         """
-        init_preds = np.zeros ((X.shape[0], 10))
-        self.X_cov = np.ones (self.X_cov.shape)
-        for i in range (10):
-            dig_cov  = self.X_cov[i, :]
-            #Keep only the non-zero variance features, to avoid
-            #NaN's when calculating Gaussian pdf.
-            idx = dig_cov != 0
-            dig_mean = self.X_mean[i, :]
-            prob = - (X[:, idx] - dig_mean[idx]) ** 2 /     \
-                   (2 * dig_cov[idx])
-            #Choose logarithm notation; consecutive multiplications
-            #of small numbers harm accuracy.
-            prob -= 0.5 * np.log (2 * np.pi * dig_cov[idx])
-            #Add the prior!
-            init_preds [:, i] = prob.sum (1) +              \
-                                np.log (self.aPriori [i])
-        return init_preds.argmax (axis = 1)
+        return datautilus.bayesHelp (self.X_mean, np.ones (self.X_var.shape), self.aPriori,
+                          X, 0)
 
     def score (self, X, y):
             """
