@@ -4,7 +4,6 @@ from src import datautilus
 import numpy as np
 import pandas as pd
 from sklearn.metrics.pairwise import euclidean_distances
-from scipy.stats import multivariate_normal
 
 class EuclideanClassifier(BaseEstimator, ClassifierMixin):
     """

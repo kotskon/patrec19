@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.metrics.pairwise import euclidean_distances
+from sklearn.model_selection import learning_curve
 
 def dataReader (train_path, test_path):
     """
@@ -116,3 +117,44 @@ def bayesHelp (means, vars, priors, features, smooth_fac):
         init_preds [:, i] = prob.sum (1) +              \
                             np.log (priors[i])
     return init_preds.argmax (axis = 1)
+
+def plotLearningCurve (clf, features, patterns, cv):
+    """
+    Performs 5-fold cross validation of a classifier repeatedly, each time
+    increasing the size of the training set. Plots the respective learning
+    curve.
+    """
+    train_sizes, train_scores, test_scores = learning_curve (clf,
+                                                             features,
+                                                             patterns,
+                                                             cv = cv,
+                                                             shuffle = True,
+                                                             random_state = 62)
+    train_scores_mean = np.mean(train_scores, axis=1)
+    train_scores_std = np.std(train_scores, axis=1)
+    test_scores_mean = np.mean(test_scores, axis=1)
+    test_scores_std = np.std(test_scores, axis=1)
+    plt.grid()
+    plt.fill_between(train_sizes, train_scores_mean - train_scores_std,
+                     train_scores_mean + train_scores_std, alpha=0.1,
+                     color="r")
+    plt.fill_between(train_sizes, test_scores_mean - test_scores_std,
+                     test_scores_mean + test_scores_std, alpha=0.1,
+                     color="g")
+    plt.plot(train_sizes, train_scores_mean, 'o-', color="r",
+             label="Training score")
+    plt.plot(train_sizes, test_scores_mean, 'o-', color="g",
+             label="Cross-validation score")
+    plt.legend(loc="best")
+
+def classScores (patterns, predictions):
+    """
+    Given a set of predictions and the respective samples' true labels, returns
+    an array of class-wise accuracies. Used in the context of constructing a
+    Voting Classifier.
+    """
+    cc = np.zeros (10)
+    for i in range (10):
+        cc[i] = (patterns[patterns == i] == predictions[patterns == i]).sum () \
+                / patterns[patterns == i].size
+    return cc
