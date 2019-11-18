@@ -80,7 +80,7 @@ def batchEuclid (features, patterns, knowledge):
     preds = np.array (dists).argmin (axis = 0)
     truthVector = (preds.T.astype (float) == patterns)
     pos = truthVector.sum ()
-    score = pos / features.shape[0] * 100
+    score = pos / features.shape[0]
     return score
 
 def probGen (patterns):
