@@ -1,2 +1,5 @@
-# patrec19
-Here will be hosted my solutions for the lab exercises of NTUA ECE's course of Pattern Recognition, winter semester of 2019-2020. 
+# Pattern Recognition
+## [ECE][ece] [NTUA][ntua]
+This is the first course I'm taking as a freshman PhD candidate.
+Also my first public repository.
+Firsts everywhere!
