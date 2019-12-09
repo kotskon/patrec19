@@ -2,6 +2,7 @@ import librosa
 from os import listdir
 from os.path import isfile, join
 import numpy as np
+import matplotlib.pyplot as plt
 
 def nameToFacts (fileName):
     """
@@ -32,13 +33,33 @@ def dataParser (path):
     valid .wav files.
     """
     waves = []
+    rates = []
     digits = []
     speakers = []
     files = [f for f in listdir (path) if isfile (join (path, f))]
     for i in range (len (files)):
-        waves.append (librosa.load (join (path, files[i])))
+        #Keep both the signals themselves, and the sampling rates.
+        sig, rate = librosa.load (join (path, files[i]), sr = None)
+        waves.append (sig)
+        rates.append (rate)
         jspeak, jdig = nameToFacts (files [i])
         digits.append (jdig)
         speakers.append (jspeak)
     print ('Parsing complete! ', len (waves), ' files in total.')
-    return waves, digits, speakers
+    return waves, np.array (digits), np.array (speakers), rates
+
+def histPlotter (n1, feature, feats, digits, speakers):
+    """
+    This function draws the histograms of a certain feature of
+    a certain digit across all speakers.
+    """
+    fig = plt.figure (figsize = (10, 10))
+    fig_idx = 1
+    for i in range (digits.size):
+        if digits[i] == n1:
+            ax = fig.add_subplot (4, 4, fig_idx)
+            ax.hist (feats[i][feature - 1, :])
+            ax.set_title ('Speaker ' + str (speakers[i]))
+            fig_idx += 1
+    fig.tight_layout ()
+    plt.show ()
