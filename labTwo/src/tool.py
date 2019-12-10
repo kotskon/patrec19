@@ -48,6 +48,33 @@ def dataParser (path):
     print ('Parsing complete! ', len (waves), ' files in total.')
     return waves, np.array (digits), np.array (speakers), rates
 
+def featFactory (wavs, rates, win_sec = 25e-3, ov_sec = 10e-3, \
+                 calc_deltas = True, mfsc = False):
+    """
+    This function extracts features from wavs. Rates are used to ensure proper
+    calibration of the window and overlap parameters. By default, MFCC with
+    deltas are calculated.
+    """
+    feats = []
+    deltas = []
+    deltas2 = []
+    for i in range (len (wavs)):
+        win = round (win_sec * rates[i])
+        hop = round ((win_sec - ov_sec) * rates[i])
+        if mfsc == False:
+            feats.append (librosa.feature.mfcc (wavs[i], sr = rates[i],     \
+                          #by default, librosa returns features as rows. We take
+                          #the transpose to have them as columns.
+                          n_mfcc = 13, win_length = win, hop_length = hop).T)
+        else:             #melspectrogram is used to bypass the DCT performed by
+                          #mfcc
+            feats.append (librosa.feature.melspectrogram (wavs[i], sr = rates[i],
+                          win_length = win, hop_length = hop, n_mels = 13).T)
+        if calc_deltas:
+            deltas.append (librosa.feature.delta (feats[i].T).T)
+            deltas2.append (librosa.feature.delta (feats[i].T, order = 2).T)
+    return feats, deltas, deltas2
+
 def histPlotter (n1, feature, feats, digits, speakers):
     """
     This function draws the histograms of a certain feature of
@@ -55,11 +82,12 @@ def histPlotter (n1, feature, feats, digits, speakers):
     """
     fig = plt.figure (figsize = (10, 10))
     fig_idx = 1
-    for i in range (digits.size):
-        if digits[i] == n1:
-            ax = fig.add_subplot (4, 4, fig_idx)
-            ax.hist (feats[i][feature - 1, :])
-            ax.set_title ('Speaker ' + str (speakers[i]))
-            fig_idx += 1
+    sigslice = [feats[i][:, feature - 1] for i in range (len (feats)) if digits[i] == n1]
+    speakslice = speakers[digits == n1]
+    for i in range (len (sigslice)):
+        ax = fig.add_subplot (4, 4, fig_idx)
+        ax.hist (sigslice[i])
+        ax.set_title ('Speaker ' + str (speakslice[i]))
+        fig_idx += 1
     fig.tight_layout ()
     plt.show ()
