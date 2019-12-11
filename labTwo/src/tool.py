@@ -10,7 +10,7 @@ def nameToFacts (fileName):
     files named like 'six2.wav'.
     """
     valText = fileName[:fileName.find ('.')]
-    digIdx = valText.find ('1' or '2' or '3' or '4' or '5' or '6' \
+    digIdx = valText.find ('1' or '2' or '3' or '4' or '5' or '6'           \
                            or '7' or '8' or '9')
     digString = valText[:digIdx]
     speakNum = int (valText[digIdx:])
@@ -48,7 +48,7 @@ def dataParser (path):
     print ('Parsing complete! ', len (waves), ' files in total.')
     return waves, np.array (digits), np.array (speakers), rates
 
-def featFactory (wavs, rates, win_sec = 25e-3, ov_sec = 10e-3, \
+def featFactory (wavs, rates, win_sec = 25e-3, ov_sec = 10e-3,              \
                  calc_deltas = True, mfsc = False):
     """
     This function extracts features from wavs. Rates are used to ensure proper
@@ -82,7 +82,8 @@ def histPlotter (n1, feature, feats, digits, speakers):
     """
     fig = plt.figure (figsize = (10, 10))
     fig_idx = 1
-    sigslice = [feats[i][:, feature - 1] for i in range (len (feats)) if digits[i] == n1]
+    sigslice = [feats[i][:, feature - 1] for i in range (len (feats)) if    \
+                digits[i] == n1]
     speakslice = speakers[digits == n1]
     for i in range (len (sigslice)):
         ax = fig.add_subplot (4, 4, fig_idx)
@@ -91,3 +92,21 @@ def histPlotter (n1, feature, feats, digits, speakers):
         fig_idx += 1
     fig.tight_layout ()
     plt.show ()
+
+def featCompression (feats, deltas, deltas2):
+    """
+    Returns augmented feature vectors for all cases.
+    """
+    feats_total = np.zeros (78)
+    for i in range (len (feats)):
+        row_total = np.array ([])
+        feat_mean = np.mean (np.array (feats[i]), axis = 0)
+        delt_mean = np.mean (np.array (deltas[i]), axis = 0)
+        delt2_mean = np.mean (np.array (deltas2[i]), axis = 0)
+        feat_std = np.std (np.array (feats[i]), axis = 0)
+        delt_std = np.std (np.array (deltas[i]), axis = 0)
+        delt2_std = np.std (np.array (deltas2[i]), axis = 0)
+        row_total = np.hstack ((feat_mean, feat_std, delt_mean, delt_std, \
+                                delt2_mean, delt2_std))
+        feats_total = np.vstack ((feats_total, row_total))
+    return feats_total[1:, :]
