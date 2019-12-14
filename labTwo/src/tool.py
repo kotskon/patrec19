@@ -3,6 +3,8 @@ from os import listdir
 from os.path import isfile, join
 import numpy as np
 import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import OneHotEncoder
 
 def nameToFacts (fileName):
     """
@@ -110,3 +112,28 @@ def featCompression (feats, deltas, deltas2):
                                 delt2_mean, delt2_std))
         feats_total = np.vstack ((feats_total, row_total))
     return feats_total[1:, :]
+
+def sinData (f, N, points, P):
+    """
+    Returns N input-output pairs of points-length sines and cosines of frequency
+    f. The signals span P multiples of their periods.
+    """
+    #Compute oscillation periods.
+    T = 1 / f
+    #Generate N random starting points.
+    start = np.random.rand (N) * T
+    #Compute sines and cosines in all intervals.
+    s_data = np.array ([])
+    c_data = np.array ([])
+    for i in range (N):
+        s_slice = np.sin (2 * np.pi * f * np.linspace (start[i],        \
+                  start[i] + P * T, points))
+        c_slice = np.cos (2 * np.pi * f * np.linspace (start[i],        \
+                  start[i] + P * T, points))
+        if i == 0:
+            s_data = s_slice
+            c_data = c_slice
+        else:
+            s_data = np.vstack ((s_data, s_slice))
+            c_data = np.vstack ((c_data, c_slice))
+    return s_data, c_data
