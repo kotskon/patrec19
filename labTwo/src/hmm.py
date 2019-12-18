@@ -34,7 +34,7 @@ def magicMarkov (X, n_states, n_mixtures, gmm = True):
             if i == 0 and j == 0:
                 X_friendly = X[i][j]
             else:
-                X_friendly = np.vstack (X[i][j])
+                X_friendly = np.vstack ((X_friendly, X[i][j]))
     dists = [] # list of probability distributions for the HMM states
     if n_mixtures == 1:
         gmm = False
@@ -69,3 +69,41 @@ def markovsAdvice (model, sample):
     logp, _ = model.viterbi(sample) # Run viterbi algorithm and return
                                     # log-probability
     return logp
+
+def ensembleSummon (models, states, mixtures):
+    """
+    Returns the ensemble for a particular configuration.
+    """
+    start = 10 * (mixtures - 1) + 50 * (states - 2)
+    end = start + 10
+    return models[start:end]
+
+def markovsCouncil (models, seq):
+    """
+    Returns the ensemble's prediction.
+    """
+    preds = np.zeros (10)
+    for num in range (10):
+        preds[num] = markovsAdvice (models[num], seq)
+    return preds.argmax ()
+
+def markovsScore (models, data, labels):
+    """
+    Returns the accuracy of an ensemble on some particular data.
+    """
+    all = labels.size
+    corrects = 0
+    for i in range (len (data)):
+        if markovsCouncil (models, data[i]) == labels[i]:
+            corrects += 1
+    return corrects / all * 100
+
+def markovsConfusion (models, data, labels):
+    """
+    Returns the confusion matrix.
+    """
+    conf = np.zeros ((10, 10))
+    for i in range (len (data)):
+        pred = markovsCouncil (models, data[i])
+        conf[labels[i], pred] += 1
+    return conf / conf.max ()
