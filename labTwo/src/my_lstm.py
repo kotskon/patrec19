@@ -4,7 +4,6 @@ import torch
 from torch.utils.data import Dataset
 import torch.nn as nn
 
-
 class FrameLevelDataset(Dataset):
     def __init__(self, feats, labels):
         """
@@ -15,7 +14,7 @@ class FrameLevelDataset(Dataset):
         self.lengths = np.array ([len (seq) for seq in feats])
         self.feats = self.zero_pad_and_stack(np.array (feats))
         if isinstance(labels, (list, tuple)):
-            self.labels = np.array(labels).astype('int64')
+            self.labels = torch.tensor (labels)
 
     def zero_pad_and_stack(self, x):
         """
@@ -24,13 +23,13 @@ class FrameLevelDataset(Dataset):
                 padded: a 3D numpy array of shape num_sequences x max_sequence_length x feature_dimension
         """
         maxLen = self.lengths.max ()
-        pad = np.zeros ((x.shape[-2], x.shape[-1]))
-        for seq in x:
-            if len (seq) < maxLen:
-                diff = maxLen - seq.shape[0]
-                seq = np.vstack ((seq, np.zeros ((diff,x.shape[-2],         \
-                                  x.shape[-1]))))
-        return padded
+        y = np.zeros ((len (x), maxLen, x[0].shape[-1]))
+        for i in range (len (x)):
+            if x[i].shape[0] < maxLen:
+                diff = maxLen - x[i].shape[0]
+                x[i] = np.vstack ((x[i], np.zeros ((diff, x[0].shape[-1]))))
+            y[i, :, :] = x[i]
+        return torch.from_numpy (y).type ('torch.FloatTensor')
 
     def __getitem__(self, item):
         return self.feats[item], self.labels[item], self.lengths[item]
@@ -38,8 +37,8 @@ class FrameLevelDataset(Dataset):
     def __len__(self):
         return len(self.feats)
 
-
 class BasicLSTM(nn.Module):
+
     def __init__(self, input_dim, rnn_size, output_dim, num_layers,         \
                  bidirectional = False, dropout = 0):
         super(BasicLSTM, self).__init__()
@@ -68,31 +67,3 @@ class BasicLSTM(nn.Module):
         # Then pass it through the remaining network
 
         return last_outputs
-
-    def last_timestep(self, outputs, lengths, bidirectional=False):
-        """
-            Returns the last output of the LSTM taking into account the zero padding
-        """
-        if bidirectional:
-            forward, backward = self.split_directions(outputs)
-            last_forward = self.last_by_index(forward, lengths)
-            last_backward = backward[:, 0, :]
-            # Concatenate and return - maybe add more functionalities like average
-            return torch.cat((last_forward, last_backward), dim=-1)
-
-        else:
-            return self.last_by_index(outputs, lengths)
-
-    @staticmethod
-    def split_directions(outputs):
-        direction_size = int(outputs.size(-1) / 2)
-        forward = outputs[:, :, :direction_size]
-        backward = outputs[:, :, direction_size:]
-        return forward, backward
-
-    @staticmethod
-    def last_by_index(outputs, lengths):
-        # Index of the last output for each sequence.
-        idx = (lengths - 1).view(-1, 1).expand(outputs.size(0),
-                                               outputs.size(2)).unsqueeze(1)
-        return outputs.gather(1, idx).squeeze()
