@@ -38,7 +38,6 @@ class FrameLevelDataset(Dataset):
         return len(self.feats)
 
 class BasicLSTM(nn.Module):
-
     def __init__(self, input_dim, rnn_size, output_dim, num_layers,         \
                  bidirectional = False, dropout = 0):
         super(BasicLSTM, self).__init__()
@@ -47,23 +46,21 @@ class BasicLSTM(nn.Module):
         self.lstm = nn.LSTM (input_dim, rnn_size, num_layers,               \
                              batch_first = True, dropout = dropout,         \
                              bidirectional = self.bidirectional)
-        self.hidden_cell = torch.zeros (num_layers, 1, self.feature_size)
         self.lin = nn.Linear (rnn_size, output_dim)
+        self.hidden = rnn_size
+        self.layers = num_layers
 
     def forward(self, x, lengths):
-        """
-            x : 3D numpy array of dimension N x L x D
-                N: batch index
-                L: sequence index
-                D: feature index
-
-            lengths: N x 1
-         """
-
-        # --------------- Insert your code here ---------------- #
-
-        # You must have all of the outputs of the LSTM, but you need only the last one (that does not exceed the sequence length)
-        # To get it use the last_timestep method
-        # Then pass it through the remaining network
-
+        h_0 = torch.zeros (self.layers * (1 + int (self.bidirectional)),    \
+                           len (x), self.hidden).requires_grad_ ()
+        c_0 = h_0
+        out, (h_n, c_n) = self.lstm (x, (h_0.detach_ (), c_0.detach_ ()))
+        last_outputs = self.lin (self.last_by_index (out, lengths))
         return last_outputs
+
+    @staticmethod
+    def last_by_index(outputs, lengths):
+        # Index of the last output for each sequence.
+        idx = (lengths - 1).view(-1, 1).expand(outputs.size(0),
+                                               outputs.size(2)).unsqueeze(1)
+        return outputs.gather(1, idx).squeeze()
