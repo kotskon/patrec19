@@ -144,6 +144,7 @@ def fit (net, epochs, lr, loader, v_loader, L2 = 0, valTime = 5,            \
             opt.zero_grad ()
         print ('Train loss at epoch', epoch, ':', float (epoch_loss))
         train_losses.append (float (loss))
+        val_losses.append (0)
         #At the end of each epoch, the network is put in evaluation mode.
         net.eval ()
         # Will infer on the validation set (and maybe check for early       \
@@ -157,7 +158,7 @@ def fit (net, epochs, lr, loader, v_loader, L2 = 0, valTime = 5,            \
                     valid_loss += loss_func (out, yb.type ('torch.LongTensor'))
                 print ('Validation loss at epoch', epoch, ':',              \
                        float (valid_loss))
-                val_losses.append (float (valid_loss))
+                val_losses [-1] = (float (valid_loss))
                 #Early stopping!
                 if old_valid_loss != -62 and valid_loss > old_valid_loss    \
                                          and earlyStopping:
@@ -179,7 +180,7 @@ def fit (net, epochs, lr, loader, v_loader, L2 = 0, valTime = 5,            \
 def finalStuff (net, val_loader, test_loader):
     val_conf = np.zeros ((10, 10))
     for xb, yb, lb in val_loader:
-        out = net.forward (xb, lb)
+        out = net[0].forward (xb, lb)
         preds = F.softmax (out, dim = -1).argmax (dim = -1)
         acc_val = int ((preds == yb).sum ()) / len (yb) * 100
     print ('Accuracy on validation set:', acc_val, '%')
@@ -187,7 +188,7 @@ def finalStuff (net, val_loader, test_loader):
         val_conf[int (yb[i]), int (preds[i])] += 1
     test_conf = np.zeros ((10, 10))
     for xb, yb, lb in test_loader:
-        out = net.forward (xb, lb)
+        out = net[0].forward (xb, lb)
         preds = F.softmax (out, dim = -1).argmax (dim = -1)
         acc_test = int ((preds == yb).sum ()) / len (yb) * 100
     for i in range (len (preds)):
@@ -195,11 +196,17 @@ def finalStuff (net, val_loader, test_loader):
     print ('Accuracy on test set:', acc_test, '%')
     fig = plt.figure (figsize = (11 ,5))
     ax1 = fig.add_subplot (1, 2, 1)
-    ax1 = sns.heatmap (val_conf)
+    ax1 = sns.heatmap (val_conf / val_conf.max ())
     ax1.set_title ('Validation set')
     ax2 = fig.add_subplot (1, 2, 2)
-    ax2 = sns.heatmap (test_conf)
+    ax2 = sns.heatmap (test_conf / test_conf.max ())
     ax2.set_title ('Test set')
     fig.tight_layout ()
     fig.suptitle ('Confusion Matrices')
     plt.show ()
+    fig2 = plt.figure ()
+    plt.plot (np.arange (len (net[1])), net[1], label = 'training', alpha = 0.6)
+    plt.plot (np.arange (len (net[2])), net[2], label = 'validation', alpha = 0.6)
+    plt.xlabel ('epoch')
+    plt.ylabel ('cross entropy')
+    plt.legend (loc = 'best')
